@@ -28,7 +28,7 @@ public class LogIn {
         this.isLoggedIn = isLoggedIn;
     }
 
-    // =============== GETTER METHODS ===============
+    //GETTER METHODS
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
     public String getUserName() { return userName; }
@@ -36,7 +36,7 @@ public class LogIn {
     public boolean isRegistered() { return isRegistered; }
     public boolean isLoggedIn() { return isLoggedIn; }
 
-    // =============== SETTER METHODS ===============
+    // SETTER METHODS
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
@@ -63,7 +63,7 @@ public class LogIn {
         this.isLoggedIn = false;
     }
 
-    // =============== VALIDATION METHODS ===============
+    // VALIDATION METHODS
     public String checkUserName() {
         if (userName == null) {
             return "Username is not correctly formatted...";
@@ -99,7 +99,7 @@ public class LogIn {
             : "Cell phone number incorrectly formatted...";
     }
 
-    // =============== CORE FUNCTIONALITY ===============
+    //CORE FUNCTIONALITY
     public String registerUser() {
         String usernameCheck = checkUserName();
         if (!usernameCheck.equals("Username successfully captured.")) {
