@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.mycompany.poe_part_a.LogInTest
 -------------------------------------------------------------------------------
-Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.077 s -- in com.mycompany.poe_part_a.LogInTest
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.088 s -- in com.mycompany.poe_part_a.LogInTest

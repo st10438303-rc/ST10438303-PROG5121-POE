@@ -1,104 +1,82 @@
 package com.mycompany.poe_part_a;
 
-import java.io.FileWriter;
-import java.io.IOException;
+/**
+ *
+ * @author RC_Student_lab
+ */
 import java.util.Random;
-import org.json.simple.JSONObject; // ✅ Correct import
+import java.util.regex.Pattern;
 
 public class MessageSystem {
+    private static int messagesSent = 0;
+    private int messageId;
+    private String recipient;
+    private String sender;
+    private String content;
+    private String messageHash;
+    private String flag; // "Sent", "Stored", or "Disregarded"
+    
+    public MessageSystem(String sender, String recipient, String content, String flag) {
+        this.messageId = generateMessageId();
+        this.sender = sender;
+        this.recipient = recipient;
+        this.content = content;
+        this.flag = flag;
+        this.messageHash = createMessageHash();
+        messagesSent++;
+    }
 
-    static int getTotalMessagesSent() {
+    public String validateMessageLength() {
+        if (content.length() > 250) {
+            int excess = content.length() - 250;
+            return String.format("Message exceeds 250 characters by %d characters.", excess);
+        }
+        return "Valid";
+    }
+    
+    public static String validateRecipientFormat(String recipient) {
+        if (recipient == null || !Pattern.matches("^\\+\\d{1,10}$", recipient)) {
+            return "Invalid format. Use + followed by up to 10 digits (e.g., +1234567890).";
+        }
+        return "Valid";
+    }
+    
+    private int generateMessageId() {
+        return new Random().nextInt(9000) + 1000; // 4-digit number
+    }
+    
+    private String createMessageHash() {
+        String[] words = content.split(" ");
+        String firstWord = words.length > 0 ? words[0] : "";
+        String lastWord = words.length > 0 ? words[words.length - 1] : "";
+        String[] colors = {"RED", "BLU", "GRN", "YLW"};
+        String color = colors[new Random().nextInt(colors.length)];
+        
+        return String.format("%04d:%s:%d:%s_%s", 
+            messageId, color, content.length(), firstWord.toUpperCase(), lastWord.toUpperCase());
+    }
+    
+    public String getMessageDetails() {
+        return String.format(
+            "ID: %04d | From: %s | To: %s | Status: %s\nContent: %s\nHash: %s\n",
+            messageId, sender, recipient, flag, content, messageHash
+        );
+    }
+    
+    public static int getTotalMessagesSent() {
+        return messagesSent;
+    }
+    
+    // Getters
+    public int getMessageId() { return messageId; }
+    public String getRecipient() { return recipient; }
+    public String getSender() { return sender; }
+    public String getContent() { return content; }
+    public String getMessageHash() { return messageHash; }
+    public String getFlag() { return flag; }
+    public int getMessageLength() { return content.length(); }
+
+    boolean getShortDetails() {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
-    private String messageId;
-    private String recipient;
-    private String message;
-    private static int messageCounter = 1;
-    private boolean isFirstMessage;
-
-    // Constructor
-    public MessageSystem(String recipient, String message) {
-        this.messageId = generateMessageId();
-        this.recipient = recipient;
-        this.message = message;
-        this.isFirstMessage = message.contains("dinner tonight");
-    }
-
-    private String generateMessageId() {
-        Random rand = new Random();
-        return String.format("%010d", rand.nextInt(1_000_000_000));
-    }
-
-    public static boolean checkMessageId(String id) {
-        return id != null && id.length() == 10 && id.matches("\\d+");
-    }
-
-    public static boolean checkRecipientCell(String cellNumber) {
-        return cellNumber.matches("(\\+27|0)[6-8][0-9]{8}");
-    }
-
-    public String createMessageHash() {
-        String[] words = message.split(" ");
-        String firstWord = words.length > 0 ? words[0] : "";
-        String lastWord = words.length > 1 ? words[words.length - 1] : firstWord;
-
-        if (isFirstMessage) {
-            return (firstWord + lastWord).toUpperCase();
-        }
-
-        return messageId.substring(0, 2) + ":" + (firstWord + lastWord).toUpperCase();
-    }
-
-    public String sendMessage(String option) {
-        switch (option) {
-            case "Send":
-                return "Message sent!";
-            case "Store":
-                storeMessageToJson();
-                return "Message stored!";
-            case "Disregard":
-            default:
-                return "Message disregarded!";
-        }
-    }
-
-    private void storeMessageToJson() {
-        JSONObject messageJson = new JSONObject();
-        messageJson.put("messageId", messageId);
-        messageJson.put("recipient", recipient);
-        messageJson.put("message", message);
-        messageJson.put("hash", createMessageHash());
-
-        try (FileWriter file = new FileWriter("messages.json", true)) {
-            file.write(messageJson.toJSONString() + "\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Getters
-    public String getMessageId() {
-        return messageId;
-    }
-
-    public String getRecipient() {
-        return recipient;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public static int getMessageCounter() {
-        return messageCounter;
-    }
-
-    public boolean getIsFirstMessage() {
-        return isFirstMessage;
-    }
-
-    public static void resetCounter() {
-        messageCounter = 1;
-    }
-   
 }

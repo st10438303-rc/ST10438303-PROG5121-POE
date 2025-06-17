@@ -1,92 +1,85 @@
 package com.mycompany.poe_part_a;
 
+import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
 public class MessageSystemTest {
+    private MessageSystem message;
+    private final String TEST_SENDER = "TestSender";
+    private final String TEST_RECIPIENT = "+27123456789";
+    private final String TEST_CONTENT = "This is a test message";
 
-    private final String filePath = "messages.json";
-
-    @AfterEach
-    void cleanupFile() throws Exception {
-        // Clean up the messages.json after each test that writes
-        File file = new File(filePath);
-        if (file.exists()) {
-            Files.delete(Paths.get(filePath));
-        }
+    @BeforeEach
+    public void setUp() {
+        message = new MessageSystem(TEST_SENDER, TEST_RECIPIENT, TEST_CONTENT, "Sent");
     }
 
     @Test
-    void testCheckMessageId_Valid() {
-        assertTrue(MessageSystem.checkMessageId("1234567890"));
+    @DisplayName("Test message creation with valid parameters")
+    public void testMessageCreation() {
+        assertNotNull(message);
+        assertEquals(TEST_SENDER, message.getSender());
+        assertEquals(TEST_RECIPIENT, message.getRecipient());
+        assertEquals(TEST_CONTENT, message.getContent());
+        assertEquals("Sent", message.getFlag());
+        assertTrue(message.getMessageId() >= 1000 && message.getMessageId() <= 9999);
+        assertNotNull(message.getMessageHash());
     }
 
     @Test
-    void testCheckMessageId_Invalid() {
-        assertFalse(MessageSystem.checkMessageId(null));
-        assertFalse(MessageSystem.checkMessageId("12345"));
-        assertFalse(MessageSystem.checkMessageId("abcdefghij"));
-        assertFalse(MessageSystem.checkMessageId("12345678901"));
+    @DisplayName("Test message length validation")
+    public void testValidateMessageLength() {
+        // Test valid length
+        assertEquals("Valid", message.validateMessageLength());
+
+        // Test invalid length
+        String longContent = "a".repeat(251);
+        MessageSystem longMessage = new MessageSystem(TEST_SENDER, TEST_RECIPIENT, longContent, "Sent");
+        assertTrue(longMessage.validateMessageLength().contains("exceeds"));
     }
 
     @Test
-    void testCheckRecipientCell_Valid() {
-        assertTrue(MessageSystem.checkRecipientCell("+27601234567"));
-        assertTrue(MessageSystem.checkRecipientCell("0612345678"));
+    @DisplayName("Test recipient validation")
+    public void testValidateRecipientFormat() {
+        // Test valid formats
+        assertEquals("Valid", MessageSystem.validateRecipientFormat("+2712345678"));
+        assertEquals("Valid", MessageSystem.validateRecipientFormat("+1234567890"));
+
+        // Test invalid formats
+        assertNotEquals("Valid", MessageSystem.validateRecipientFormat("2712345678")); // Missing +
+        assertNotEquals("Valid", MessageSystem.validateRecipientFormat("+abcdefghij")); // Non-digits
+        assertNotEquals("Valid", MessageSystem.validateRecipientFormat("+12345678901")); // Too long
+        assertNotEquals("Valid", MessageSystem.validateRecipientFormat(null)); // Null
     }
 
     @Test
-    void testCheckRecipientCell_Invalid() {
-        assertFalse(MessageSystem.checkRecipientCell("+2712345678"));
-        assertFalse(MessageSystem.checkRecipientCell("0212345678"));
-        assertFalse(MessageSystem.checkRecipientCell("1234567890"));
-        assertFalse(MessageSystem.checkRecipientCell(null));
+    @DisplayName("Test message hash generation")
+    public void testCreateMessageHash() {
+        String hash = message.getMessageHash();
+        assertNotNull(hash);
+        assertTrue(hash.startsWith(String.format("%04d", message.getMessageId())));
+        assertTrue(hash.contains(":"));
+        assertTrue(hash.split(":").length == 4);
     }
 
     @Test
-    void testCreateMessageHash_FirstMessage() {
-        MessageSystem msg = new MessageSystem("0612345678", "Let's have dinner tonight");
-        String hash = msg.createMessageHash();
-        assertEquals("LET'STONIGHT", hash);
+    @DisplayName("Test message details formatting")
+    public void testGetMessageDetails() {
+        String details = message.getMessageDetails();
+        assertNotNull(details);
+        assertTrue(details.contains("ID: " + message.getMessageId()));
+        assertTrue(details.contains("From: " + TEST_SENDER));
+        assertTrue(details.contains("To: " + TEST_RECIPIENT));
+        assertTrue(details.contains("Content: " + TEST_CONTENT));
+        assertTrue(details.contains("Hash: " + message.getMessageHash()));
     }
 
     @Test
-    void testCreateMessageHash_NonFirstMessage() {
-        MessageSystem msg = new MessageSystem("0612345678", "Hello world");
-        String hash = msg.createMessageHash();
-        String expectedStart = msg.getMessageId().substring(0, 2) + ":";
-        assertTrue(hash.startsWith(expectedStart));
-        assertTrue(hash.endsWith("HELLOWORLD"));
-    }
-
-    @Test
-    void testSendMessage_Send() {
-        MessageSystem msg = new MessageSystem("0612345678", "Hello");
-        assertEquals("Message sent!", msg.sendMessage("Send"));
-    }
-
-    @Test
-    void testSendMessage_Disregard() {
-        MessageSystem msg = new MessageSystem("0612345678", "Hello");
-        assertEquals("Message disregarded!", msg.sendMessage("Disregard"));
-        assertEquals("Message disregarded!", msg.sendMessage("Other"));
-    }
-
-    @Test
-    void testSendMessage_Store_CreatesFile() throws Exception {
-        MessageSystem msg = new MessageSystem("0612345678", "Hello world");
-        assertEquals("Message stored!", msg.sendMessage("Store"));
-
-        File file = new File(filePath);
-        assertTrue(file.exists());
-        String content = Files.readString(Paths.get(filePath));
-        assertTrue(content.contains("Hello world"));
-        assertTrue(content.contains(msg.getMessageId()));
+    @DisplayName("Test total messages sent counter")
+    public void testGetTotalMessagesSent() {
+        int initialCount = MessageSystem.getTotalMessagesSent();
+        new MessageSystem("S1", "+27111111111", "Test1", "Sent");
+        new MessageSystem("S2", "+27222222222", "Test2", "Stored");
+        assertEquals(initialCount + 2, MessageSystem.getTotalMessagesSent());
     }
 }
